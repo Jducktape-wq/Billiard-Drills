@@ -1,0 +1,8 @@
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+          "namespace": "android_app",
+          "package_name": "io.github.jducktape_wq.rackrun",
+          "sha256_cert_fingerprints": ["DA:9D:C5:09:D5:11:CC:56:95:C7:AE:97:BD:CE:1F:4E:6D:92:CA:4F:2F:93:88:3F:F3:9F:2E:8A:9D:D1:1B:00"]
+    }
+}]
