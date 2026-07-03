@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14181c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Rack &amp; Run — Pool Practice</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --slate: #14181c;
+    --slate-2: #1d2329;
+    --slate-3: #262e36;
+    --felt: #0f5c3f;
+    --felt-lit: #157a54;
+    --chalk: #4a9fd4;
+    --ivory: #f2ede3;
+    --ivory-dim: #b8b2a4;
+    --rail: #8b5e34;
+    --make: #3fae6a;
+    --miss: #c1502e;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--slate);
+    color: var(--ivory);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 640px; margin: 0 auto; padding: 0 16px 80px; }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 28px 0 18px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .logo {
+    font-family: 'Alfa Slab One', Georgia, serif;
+    font-size: 26px;
+    letter-spacing: 0.5px;
+    color: var(--ivory);
+    line-height: 1.1;
+  }
+  .logo .dot { color: var(--chalk); }
+  .session-pill {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ivory-dim);
+    background: var(--slate-2);
+    border: 1px solid var(--slate-3);
+    border-radius: 999px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+  .session-pill b { color: var(--make); font-weight: 700; }
+
+  /* ---------- Category tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 14px;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto;
+    background: var(--slate-2);
+    border: 1px solid var(--slate-3);
+    color: var(--ivory-dim);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .tab:hover { border-color: var(--chalk); }
+  .tab.active {
+    background: var(--felt);
+    border-color: var(--felt-lit);
+    color: var(--ivory);
+  }
+  .tab:focus-visible, .drill-head:focus-visible, .pip:focus-visible, .btn:focus-visible {
+    outline: 2px solid var(--chalk);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Drill cards ---------- */
+  .drill {
+    background: var(--slate-2);
+    border: 1px solid var(--slate-3);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .drill-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .drill-title { flex: 1; }
+  .drill-title h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .drill-title .meta {
+    font-size: 12px;
+    color: var(--ivory-dim);
+    margin-top: 2px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .diff {
+    display: inline-flex;
+    gap: 3px;
+  }
+  .diff i {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--slate-3);
+  }
+  .diff i.on { background: var(--chalk); }
+  .pct {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ivory-dim);
+    min-width: 44px;
+    text-align: right;
+  }
+  .pct.good { color: var(--make); }
+  .pct.work { color: var(--miss); }
+  .chev {
+    width: 10px; height: 10px;
+    border-right: 2px solid var(--ivory-dim);
+    border-bottom: 2px solid var(--ivory-dim);
+    transform: rotate(45deg);
+    transition: transform .2s ease;
+    flex: 0 0 auto;
+  }
+  .drill.open .chev { transform: rotate(-135deg); }
+
+  .drill-body { display: none; padding: 0 16px 16px; }
+  .drill.open .drill-body { display: block; }
+
+  .table-diagram {
+    background: var(--felt);
+    border: 6px solid var(--rail);
+    border-radius: 10px;
+    margin: 4px 0 14px;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .drill-body h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--chalk);
+    margin: 14px 0 6px;
+  }
+  .drill-body p, .drill-body li { font-size: 14px; color: var(--ivory); }
+  .drill-body ol { padding-left: 20px; }
+  .drill-body li { margin-bottom: 5px; }
+  .goal {
+    background: var(--slate-3);
+    border-left: 3px solid var(--chalk);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+  }
+
+  /* ---------- Tracker ---------- */
+  .tracker {
+    margin-top: 16px;
+    background: var(--slate);
+    border: 1px solid var(--slate-3);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .tracker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .tracker-row .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ivory-dim); }
+  .score { font-size: 14px; font-weight: 700; }
+  .score .m { color: var(--make); }
+  .score .x { color: var(--miss); }
+
+  .pips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .pip {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--slate-3);
+    background: var(--slate-2);
+    cursor: default;
+  }
+  .pip.make { background: var(--make); border-color: var(--make); }
+  .pip.miss { background: transparent; border-color: var(--miss); position: relative; }
+  .pip.miss::after {
+    content: '';
+    position: absolute; inset: 5px;
+    background: linear-gradient(45deg, transparent 44%, var(--miss) 44%, var(--miss) 56%, transparent 56%),
+                linear-gradient(-45deg, transparent 44%, var(--miss) 44%, var(--miss) 56%, transparent 56%);
+  }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px 0;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: transform .05s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.make-btn { background: var(--make); color: #08110c; }
+  .btn.miss-btn { background: var(--slate-3); color: var(--miss); border: 1px solid var(--miss); }
+  .btn.reset-btn {
+    flex: 0 0 auto;
+    background: none;
+    color: var(--ivory-dim);
+    border: 1px solid var(--slate-3);
+    padding: 12px 14px;
+    font-weight: 600;
+  }
+
+  .best {
+    font-size: 12px;
+    color: var(--ivory-dim);
+    margin-top: 10px;
+    text-align: center;
+  }
+  .best b { color: var(--ivory); }
+
+  .empty-note {
+    text-align: center;
+    color: var(--ivory-dim);
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--ivory-dim);
+    padding-top: 24px;
+    opacity: .7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Rack<span class="dot">&middot;</span>Run</div>
+    <div class="session-pill">Session: <b id="sessionMakes">0</b> / <span id="sessionTotal">0</span></div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Drill categories"></nav>
+  <main id="drillList"></main>
+
+  <footer>Tap Make or Miss after each attempt &middot; progress saves on this device</footer>
+</div>
+
+<script>
+/* ---------- Safe storage (works in preview + saved file) ---------- */
+const mem = {};
+const store = {
+  get(k){ try { return localStorage.getItem(k) ?? mem[k] ?? null; } catch(e){ return mem[k] ?? null; } },
+  set(k,v){ mem[k]=v; try { localStorage.setItem(k,v); } catch(e){} }
+};
+
+/* ---------- Table diagram renderer ----------
+   Coordinates: x 0-100 (length), y 0-50 (width). Foot spot ~ (75,25). */
+function tableSVG(cfg){
+  const balls = cfg.balls || [];
+  const lines = cfg.lines || [];
+  const zones = cfg.zones || [];
+  let s = `<svg class="table-diagram" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Drill setup diagram">`;
+  // pockets
+  const pk = [[0,0],[50,0],[100,0],[0,50],[50,50],[100,50]];
+  pk.forEach(p=>{ s += `<circle cx="${p[0]}" cy="${p[1]}" r="3.2" fill="#0a0d10"/>`; });
+  // head string + spots
+  s += `<line x1="25" y1="0" x2="25" y2="50" stroke="#ffffff22" stroke-width="0.4" stroke-dasharray="1.5 1.5"/>`;
+  s += `<circle cx="75" cy="25" r="0.8" fill="#ffffff55"/>`;
+  zones.forEach(z=>{ s += `<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" fill="#4a9fd422" stroke="#4a9fd4" stroke-width="0.4" stroke-dasharray="1.5 1.5" rx="1.5"/>`; });
+  lines.forEach(l=>{ s += `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="${l.c||'#f2ede3'}" stroke-width="0.6" stroke-dasharray="${l.dash?'2 1.5':'none'}" opacity="0.75"/>`; });
+  balls.forEach(b=>{
+    const fill = b.t==='cue' ? '#f2ede3' : (b.t==='ghost' ? 'none' : (b.c || '#e8b83a'));
+    const stroke = b.t==='ghost' ? '#f2ede3' : '#0a0d10';
+    s += `<circle cx="${b.x}" cy="${b.y}" r="2.1" fill="${fill}" stroke="${stroke}" stroke-width="0.5" ${b.t==='ghost'?'stroke-dasharray="1.2 1"':''}/>`;
+    if(b.t==='cue') s += `<circle cx="${b.x-0.6}" cy="${b.y-0.6}" r="0.5" fill="#ffffffcc"/>`;
+  });
+  s += `</svg>`;
+  return s;
+}
+
+/* ---------- Drill library ---------- */
+const CATS = ["All","Aiming","Cue Ball Control","Position Play","Banks & Kicks","Speed Control","Safeties","Break","Stroke"];
+
+const DRILLS = [
+/* ===== AIMING ===== */
+{ id:"ghost-line", cat:"Aiming", name:"Ghost Ball Line", diff:1, reps:10,
+  diagram:{ balls:[{x:30,y:35,t:'cue'},{x:58,y:22,c:'#e8b83a'},{x:61.5,y:19.5,t:'ghost'}], lines:[{x1:30,y1:35,x2:61.5,y2:19.5,dash:1},{x1:58,y1:22,x2:100,y2:0,dash:1,c:'#4a9fd4'}] },
+  setup:["Place the cue ball anywhere, object ball 2-3 feet away with a clear pocket.","Set a spare ball at the ghost ball position (where the cue ball must be at contact).","Remove it, then send the cue ball through that exact spot.","10 reps, then change the angle."],
+  goal:"8 of 10 at each angle before moving to a thinner cut." },
+{ id:"spot-shot", cat:"Aiming", name:"Spot Shot Ladder", diff:2, reps:12,
+  diagram:{ balls:[{x:75,y:25,c:'#e8b83a'},{x:55,y:25,t:'cue'},{x:45,y:25,t:'ghost'},{x:35,y:25,t:'ghost'}], lines:[{x1:75,y1:25,x2:100,y2:0,dash:1,c:'#4a9fd4'}] },
+  setup:["Object ball on the foot spot, lined to a corner pocket.","Cue ball straight back — start 1 foot away.","After each make, move the cue ball back another foot, up to 6 feet.","Miss = restart the ladder at 1 foot."],
+  goal:"Climb the full ladder (1-6 ft) twice in a session." },
+{ id:"clock-drill", cat:"Aiming", name:"Clock Drill", diff:3, reps:12,
+  diagram:{ balls:[{x:50,y:25,c:'#e8b83a'},{x:50,y:8,t:'ghost'},{x:65,y:12,t:'ghost'},{x:68,y:25,t:'ghost'},{x:65,y:38,t:'ghost'},{x:50,y:42,t:'ghost'},{x:35,y:38,t:'ghost'},{x:32,y:25,t:'ghost'},{x:35,y:12,t:'ghost'}] },
+  setup:["Object ball at table center.","Cue ball at 12 positions around it like a clock face.","Pocket the object ball in the nearest open pocket from each position.","Reset to center after every shot."],
+  goal:"Full lap of the clock — note which hours you miss." },
+{ id:"cut-progress", cat:"Aiming", name:"Progressive Thin Cuts", diff:4, reps:10,
+  diagram:{ balls:[{x:70,y:10,c:'#e8b83a'},{x:35,y:32,t:'cue'}], lines:[{x1:70,y1:10,x2:100,y2:0,dash:1,c:'#4a9fd4'},{x1:35,y1:32,x2:70,y2:10,dash:1}] },
+  setup:["Object ball one diamond off a corner pocket.","Start with a comfortable 30° cut and pocket it 3 times.","Move the cue ball to steepen the angle ~10° each round.","Work toward 70°+ razor cuts."],
+  goal:"3 in a row at each angle before steepening." },
+/* ===== CUE BALL CONTROL ===== */
+{ id:"stop-shot", cat:"Cue Ball Control", name:"Stop Shot Precision", diff:1, reps:10,
+  diagram:{ balls:[{x:75,y:25,c:'#e8b83a'},{x:55,y:25,t:'cue'}], lines:[{x1:75,y1:25,x2:100,y2:0,dash:1,c:'#4a9fd4'}] },
+  setup:["Straight-in shot, cue ball 2 feet from object ball.","Strike slightly below center with a smooth stroke.","Cue ball must stop dead — no drift forward or back.","Increase distance as you improve; longer = lower tip + more speed."],
+  goal:"Cue ball stops within a chalk-width, 8 of 10." },
+{ id:"draw-ladder", cat:"Cue Ball Control", name:"Draw Ladder", diff:2, reps:10,
+  diagram:{ balls:[{x:80,y:25,c:'#e8b83a'},{x:60,y:25,t:'cue'}], lines:[{x1:80,y1:25,x2:100,y2:0,dash:1,c:'#4a9fd4'},{x1:60,y1:25,x2:42,y2:25,dash:1,c:'#c1502e'}] },
+  setup:["Straight-in shot 1-2 feet apart. Pocket the ball and draw back exactly 6 inches.","Next rep: draw back 1 foot. Then 2 feet. Then to the rail.","Tip contact stays constant — bottom third, near the edge.","Level cue, long low follow-through. No stabbing."],
+  goal:"Hit each target distance within 6 inches, twice in a row." },
+{ id:"follow-control", cat:"Cue Ball Control", name:"Follow Distance Control", diff:2, reps:10,
+  diagram:{ balls:[{x:60,y:25,c:'#e8b83a'},{x:40,y:25,t:'cue'}], lines:[{x1:60,y1:25,x2:100,y2:0,dash:1,c:'#4a9fd4'},{x1:60,y1:25,x2:78,y2:25,dash:1,c:'#3fae6a'}] },
+  setup:["Straight-in shot. Strike above center for natural follow.","Rep 1: cue ball follows 6 inches. Rep 2: 1 foot. Rep 3: 2 feet.","Control distance with speed, not by changing tip height wildly.","Place a coin as the target landing spot."],
+  goal:"Land within one ball-width of the coin, 7 of 10." },
+{ id:"stun-run", cat:"Cue Ball Control", name:"Stun Run-Through", diff:3, reps:10,
+  diagram:{ balls:[{x:68,y:18,c:'#e8b83a'},{x:48,y:30,t:'cue'}], lines:[{x1:68,y1:18,x2:100,y2:0,dash:1,c:'#4a9fd4'},{x1:68,y1:18,x2:74,y2:30,dash:1,c:'#3fae6a'}] },
+  setup:["Set a slight cut angle (15-20°).","Strike center ball so the cue ball slides along the tangent line.","Watch where the cue ball travels — it should move perpendicular to the object ball path.","This is the foundation of all position play off cuts."],
+  goal:"Predict the tangent line landing zone before shooting — 7 of 10 correct." },
+{ id:"draw-cut", cat:"Cue Ball Control", name:"Draw Through an Angle", diff:4, reps:10,
+  diagram:{ balls:[{x:70,y:15,c:'#e8b83a'},{x:45,y:30,t:'cue'}], lines:[{x1:70,y1:15,x2:100,y2:0,dash:1,c:'#4a9fd4'},{x1:70,y1:15,x2:55,y2:38,dash:1,c:'#c1502e'}] },
+  setup:["Set a 15-20° cut with a clear pocket.","Apply draw — cue ball bends back off the tangent line.","Place a target zone (piece of paper) where you want the cue ball to land.","Steepen the cut as you improve."],
+  goal:"Land the cue ball in a sheet-of-paper zone, 5 of 10." },
+/* ===== POSITION PLAY ===== */
+{ id:"three-ball", cat:"Position Play", name:"3-Ball Runout", diff:2, reps:10,
+  diagram:{ balls:[{x:30,y:35,t:'cue'},{x:55,y:15,c:'#e8b83a'},{x:70,y:35,c:'#d04b3e'},{x:85,y:20,c:'#4667b0'}] },
+  setup:["Toss 3 balls on the table randomly. Take ball in hand.","Run all 3 in any order — plan the full sequence before shooting.","Think two balls ahead: where must the cue ball be for the NEXT shot?","Rerack and repeat. Add a 4th ball when you clear 3 consistently."],
+  goal:"Clear 3 balls without a miss, 6 of 10 racks." },
+{ id:"zone-drill", cat:"Position Play", name:"Landing Zone Drill", diff:3, reps:10,
+  diagram:{ balls:[{x:70,y:20,c:'#e8b83a'},{x:45,y:32,t:'cue'}], zones:[{x:25,y:30,w:16,h:12}], lines:[{x1:70,y1:20,x2:100,y2:0,dash:1,c:'#4a9fd4'}] },
+  setup:["Set any medium-difficulty shot.","Before shooting, place a sheet of paper where the cue ball should land.","Pocket the ball AND land the cue ball on the paper.","Shrink the zone (fold the paper in half) as you improve."],
+  goal:"Full sheet: 7 of 10. Half sheet: 5 of 10." },
+{ id:"line-of-balls", cat:"Position Play", name:"Line of Balls", diff:4, reps:8,
+  diagram:{ balls:[{x:40,y:25,c:'#e8b83a'},{x:50,y:25,c:'#d04b3e'},{x:60,y:25,c:'#4667b0'},{x:70,y:25,c:'#8250a0'},{x:25,y:38,t:'cue'}] },
+  setup:["Line 4-6 balls up the center of the table, a ball-width apart.","Ball in hand to start. Pocket them in any order.","Cue ball may NOT touch another ball or a rail.","This forces precise, small position moves."],
+  goal:"Clear 4 balls clean; add balls as you improve." },
+{ id:"nine-spot", cat:"Position Play", name:"9-Ball Ghost (3 racks)", diff:5, reps:3,
+  diagram:{ balls:[{x:75,y:25,c:'#e8b83a'},{x:79,y:22,c:'#d04b3e'},{x:79,y:28,c:'#4667b0'},{x:83,y:25,c:'#f0d24a'},{x:30,y:25,t:'cue'}] },
+  setup:["Rack 9-ball, break, take ball in hand once.","Run the rack in rotation — you vs. 'the ghost.'","Any miss = ghost wins that rack.","Log each rack as a make (you) or miss (ghost)."],
+  goal:"Beat the ghost 1 of 3 racks, then raise the bar." },
+/* ===== BANKS & KICKS ===== */
+{ id:"cross-side", cat:"Banks & Kicks", name:"Cross-Side Banks", diff:2, reps:10,
+  diagram:{ balls:[{x:55,y:35,c:'#e8b83a'},{x:35,y:40,t:'cue'}], lines:[{x1:55,y1:35,x2:60,y2:0,dash:1},{x1:60,y1:0,x2:50,y2:50,dash:1,c:'#4a9fd4'}] },
+  setup:["Object ball a diamond off the side rail, near center table.","Bank it cross-side (opposite side pocket).","Use the mirror system: aim at the reflection of the pocket.","Medium speed — hard banks shorten, soft banks lengthen."],
+  goal:"4 of 10 to start; 6 of 10 is league-strong." },
+{ id:"one-rail-kick", cat:"Banks & Kicks", name:"One-Rail Kicks", diff:3, reps:10,
+  diagram:{ balls:[{x:25,y:15,t:'cue'},{x:75,y:15,c:'#e8b83a'}], lines:[{x1:25,y1:15,x2:50,y2:50,dash:1},{x1:50,y1:50,x2:75,y2:15,dash:1,c:'#4a9fd4'}] },
+  setup:["Place an object ball and a blocking situation (imaginary or real).","Kick one rail to contact the object ball.","Use the diamond system: cue ball position + target = rail contact point.","Score a 'make' for full contact, bonus if you pocket or leave safe."],
+  goal:"Contact 8 of 10; good hits (center ball contact) 5 of 10." },
+{ id:"two-rail-kick", cat:"Banks & Kicks", name:"Two-Rail Kicks", diff:4, reps:10,
+  diagram:{ balls:[{x:20,y:35,t:'cue'},{x:80,y:40,c:'#e8b83a'}], lines:[{x1:20,y1:35,x2:45,y2:0,dash:1},{x1:45,y1:0,x2:95,y2:32,dash:1},{x1:95,y1:32,x2:80,y2:40,dash:1,c:'#4a9fd4'}] },
+  setup:["Cue ball in one corner area, target ball diagonal.","Kick two rails (long-short or short-long) to make contact.","Running english (follow the natural roll) keeps angles predictable.","Track contact vs. whiff honestly."],
+  goal:"Contact 6 of 10." },
+/* ===== SPEED CONTROL ===== */
+{ id:"lag-drill", cat:"Speed Control", name:"Lag Ladder", diff:1, reps:10,
+  diagram:{ balls:[{x:20,y:25,t:'cue'}], lines:[{x1:20,y1:25,x2:98,y2:25,dash:1},{x1:98,y1:25,x2:30,y2:25,dash:1,c:'#4a9fd4'}], zones:[{x:22,y:19,w:12,h:12}] },
+  setup:["Shoot the cue ball down table off the far rail, back toward you.","Goal: stop it within one diamond of the head rail without touching it.","10 attempts, score makes.","Then change the target: stop at center table, then at the foot spot."],
+  goal:"7 of 10 inside a one-diamond window." },
+{ id:"speed-zones", cat:"Speed Control", name:"Speed Zones 1-2-3", diff:2, reps:9,
+  diagram:{ balls:[{x:15,y:25,t:'cue'}], zones:[{x:35,y:19,w:14,h:12},{x:57,y:19,w:14,h:12},{x:80,y:19,w:14,h:12}] },
+  setup:["Mark three zones down the table (papers or chalk spots).","Shoot the cue ball into zone 1, then zone 2, then zone 3, in order.","3 full cycles = 9 shots. Cue ball must stop inside the zone.","This calibrates your soft / medium / firm strokes."],
+  goal:"2 clean cycles of 3." },
+{ id:"rail-first", cat:"Speed Control", name:"Object Ball Speed", diff:3, reps:10,
+  diagram:{ balls:[{x:40,y:25,t:'cue'},{x:60,y:25,c:'#e8b83a'}], zones:[{x:84,y:19,w:12,h:12}], lines:[{x1:60,y1:25,x2:88,y2:25,dash:1,c:'#4a9fd4'}] },
+  setup:["Straight shot at an object ball — but DON'T pocket it.","Roll the object ball so it stops inside a target zone short of the pocket.","Vary the zone distance each set.","Teaches the touch for safeties and shape on clustered balls."],
+  goal:"Object ball dies in the zone 6 of 10." },
+/* ===== SAFETIES ===== */
+{ id:"hide-drill", cat:"Safeties", name:"Hide Behind the Blocker", diff:3, reps:10,
+  diagram:{ balls:[{x:40,y:30,t:'cue'},{x:60,y:20,c:'#e8b83a'},{x:52,y:32,c:'#8250a0'}], lines:[{x1:40,y1:30,x2:60,y2:20,dash:1}] },
+  setup:["Place a blocker ball mid-table, object ball beyond it.","Thin the object ball and tuck the cue ball behind the blocker.","Your opponent (imaginary) must not have a direct line to the object ball.","Score a make only if the hide is complete."],
+  goal:"Full snooker 5 of 10." },
+{ id:"distance-safe", cat:"Safeties", name:"Distance Safety", diff:2, reps:10,
+  diagram:{ balls:[{x:35,y:25,t:'cue'},{x:55,y:25,c:'#e8b83a'}], lines:[{x1:55,y1:25,x2:95,y2:45,dash:1,c:'#4a9fd4'},{x1:35,y1:25,x2:20,y2:12,dash:1,c:'#c1502e'}] },
+  setup:["When you can't hide, make it LONG. Thin the object ball to the far end.","Bring the cue ball back to the near rail — frozen if possible.","Both balls far apart + cue on the rail = brutal leave.","Score a make if both balls end past center in opposite halves."],
+  goal:"7 of 10 quality leaves." },
+/* ===== BREAK ===== */
+{ id:"break-control", cat:"Break", name:"Controlled Break", diff:3, reps:8,
+  diagram:{ balls:[{x:25,y:25,t:'cue'},{x:75,y:25,c:'#e8b83a'},{x:79,y:22,c:'#d04b3e'},{x:79,y:28,c:'#4667b0'},{x:83,y:19,c:'#f0d24a'},{x:83,y:25,c:'#8250a0'},{x:83,y:31,c:'#3fae6a'}] },
+  setup:["Rack a full 8-ball or 9-ball rack.","Break at ~80% power with a square hit on the head ball.","Success = cue ball stays near center table (no scratch, no flying).","Power means nothing without a square hit — watch the rack spread."],
+  goal:"Cue ball parks center table 5 of 8 breaks." },
+{ id:"break-speed", cat:"Break", name:"Square Hit Check", diff:2, reps:8,
+  diagram:{ balls:[{x:25,y:25,t:'cue'},{x:75,y:25,c:'#e8b83a'}], lines:[{x1:25,y1:25,x2:75,y2:25,dash:1}] },
+  setup:["Single ball on the foot spot, cue ball at your break position.","Break-speed stroke: hit it dead square.","A square hit sends the object ball straight and the cue ball stops or pops straight back.","If the cue ball veers sideways, the hit was off-center."],
+  goal:"Square contact 6 of 8 at full speed." },
+/* ===== STROKE ===== */
+{ id:"bottle-drill", cat:"Stroke", name:"Straight Stroke Check", diff:1, reps:10,
+  diagram:{ balls:[{x:50,y:25,t:'cue'}], lines:[{x1:20,y1:25,x2:80,y2:25,dash:1}] },
+  setup:["Shoot the cue ball from the head spot over the foot spot to the far rail.","It should rebound straight back and hit your cue tip (hold position after the stroke).","Any sideways drift = unwanted english or a crooked stroke.","Slow motion first, then normal speed."],
+  goal:"Ball returns to the tip 7 of 10." },
+{ id:"pause-drill", cat:"Stroke", name:"Pause & Finish", diff:2, reps:10,
+  diagram:{ balls:[{x:45,y:25,t:'cue'},{x:65,y:25,c:'#e8b83a'}], lines:[{x1:65,y1:25,x2:100,y2:0,dash:1,c:'#4a9fd4'}] },
+  setup:["Any easy shot. Focus is 100% on rhythm, not the pocket.","Slow backstroke → brief pause at the back → smooth accelerating finish.","Freeze your finish position for a full 2 seconds after contact.","The pause kills the rushed, jabby stroke under pressure."],
+  goal:"10 reps with a held finish — makes are a bonus, rhythm is the rep." }
+];
+
+/* ---------- State ---------- */
+let activeCat = "All";
+let session = { makes:0, total:0 };
+let openId = null;
+
+function keyFor(id){ return "rr_" + id; }
+function loadRec(id){
+  try { return JSON.parse(store.get(keyFor(id))) || {history:[], best:0}; }
+  catch(e){ return {history:[], best:0}; }
+}
+function saveRec(id, rec){ store.set(keyFor(id), JSON.stringify(rec)); }
+
+/* ---------- Render ---------- */
+function diffDots(n){
+  let h = '<span class="diff" title="Difficulty">';
+  for(let i=1;i<=5;i++) h += `<i class="${i<=n?'on':''}"></i>`;
+  return h + '</span>';
+}
+
+function pctFor(rec){
+  const h = rec.history;
+  if(!h.length) return null;
+  const recent = h.slice(-30);
+  return Math.round(100 * recent.filter(x=>x).length / recent.length);
+}
+
+function renderTabs(){
+  const el = document.getElementById('tabs');
+  el.innerHTML = CATS.map(c=>
+    `<button class="tab ${c===activeCat?'active':''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function renderList(){
+  const el = document.getElementById('drillList');
+  const list = DRILLS.filter(d => activeCat==="All" || d.cat===activeCat);
+  if(!list.length){ el.innerHTML = '<div class="empty-note">No drills here yet.</div>'; return; }
+  el.innerHTML = list.map(d=>{
+    const rec = loadRec(d.id);
+    const pct = pctFor(rec);
+    const pctCls = pct===null ? '' : (pct>=70 ? 'good' : (pct<50 ? 'work' : ''));
+    const isOpen = openId===d.id;
+    return `
+    <section class="drill ${isOpen?'open':''}" id="card-${d.id}">
+      <button class="drill-head" onclick="toggle('${d.id}')" aria-expanded="${isOpen}">
+        <div class="drill-title">
+          <h3>${d.name}</h3>
+          <div class="meta">${diffDots(d.diff)} <span>${d.cat}</span></div>
+        </div>
+        <span class="pct ${pctCls}">${pct===null?'—':pct+'%'}</span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      ${isOpen ? drillBody(d, rec) : ''}
+    </section>`;
+  }).join('');
+}
+
+function drillBody(d, rec){
+  const setReps = currentSet(d.id);
+  const pips = Array.from({length:d.reps}, (_,i)=>{
+    const v = setReps[i];
+    return `<span class="pip ${v===true?'make':(v===false?'miss':'')}"></span>`;
+  }).join('');
+  const made = setReps.filter(x=>x===true).length;
+  const missed = setReps.filter(x=>x===false).length;
+  return `
+  <div class="drill-body">
+    ${tableSVG(d.diagram)}
+    <h4>Setup</h4>
+    <ol>${d.setup.map(s=>`<li>${s}</li>`).join('')}</ol>
+    <h4>Goal</h4>
+    <div class="goal">${d.goal}</div>
+    <div class="tracker">
+      <div class="tracker-row">
+        <span class="label">This set (${d.reps} reps)</span>
+        <span class="score"><span class="m">${made} made</span> · <span class="x">${missed} missed</span></span>
+      </div>
+      <div class="pips">${pips}</div>
+      <div class="btn-row">
+        <button class="btn make-btn" onclick="log('${d.id}', true)">Make</button>
+        <button class="btn miss-btn" onclick="log('${d.id}', false)">Miss</button>
+        <button class="btn reset-btn" onclick="resetSet('${d.id}')" title="Reset this set">↺</button>
+      </div>
+      <div class="best">Best set: <b>${rec.best} / ${d.reps}</b> · Lifetime attempts: <b>${rec.history.length}</b></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Current set tracking (in-memory per open card) ---------- */
+const sets = {};
+function currentSet(id){ return sets[id] || (sets[id] = []); }
+
+/* ---------- Actions ---------- */
+window.setCat = function(c){ activeCat=c; renderTabs(); renderList(); };
+window.toggle = function(id){
+  openId = (openId===id) ? null : id;
+  renderList();
+  if(openId){ const el = document.getElementById('card-'+id); if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+};
+window.log = function(id, made){
+  const d = DRILLS.find(x=>x.id===id);
+  const set = currentSet(id);
+  if(set.length >= d.reps){ set.length = 0; }
+  set.push(made);
+  const rec = loadRec(id);
+  rec.history.push(made ? 1 : 0);
+  if(rec.history.length > 500) rec.history = rec.history.slice(-500);
+  const setMakes = set.filter(x=>x===true).length;
+  if(set.length===d.reps && setMakes > rec.best) rec.best = setMakes;
+  saveRec(id, rec);
+  session.total++; if(made) session.makes++;
+  document.getElementById('sessionMakes').textContent = session.makes;
+  document.getElementById('sessionTotal').textContent = session.total;
+  renderList();
+};
+window.resetSet = function(id){ sets[id] = []; renderList(); };
+
+renderTabs();
+renderList();
+
+/* ---------- PWA: register service worker ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
