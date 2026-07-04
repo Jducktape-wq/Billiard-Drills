@@ -1,3 +1,5 @@
 # Rack-Run - pool practice drills
 User-agent: *
 Allow: /
+
+# build nudge: compact layout
