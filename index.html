@@ -212,6 +212,39 @@
   }
   .contact-label { font-size: 13.5px; color: var(--ivory); font-weight: 600; }
 
+  .tier-badge { margin-right: 4px; }
+  .prof-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tier-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; color: var(--ivory-dim);
+    background: var(--slate); border: 1.5px solid var(--slate-3);
+    border-radius: 999px; padding: 5px 11px;
+  }
+  .tier-chip.achieved { color: var(--ivory); }
+  .prof-next { font-size: 12.5px; color: var(--ivory-dim); margin-top: 8px; }
+  .prof-next.gold-done { color: #e8b83a; font-weight: 700; }
+  #toast {
+    position: fixed; top: 14px; left: 50%;
+    transform: translateX(-50%) translateY(-130%);
+    display: flex; align-items: center; gap: 12px;
+    background: var(--slate-2); border: 2px solid var(--make);
+    border-radius: 14px; padding: 12px 18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+    z-index: 999; transition: transform .35s cubic-bezier(.2,.9,.3,1.3);
+    max-width: 90vw;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  .toast-title { font-weight: 800; font-size: 14.5px; }
+  .toast-sub { font-size: 12px; color: var(--ivory-dim); }
+  .confetti {
+    position: fixed; top: 60px; width: 8px; height: 8px; border-radius: 2px;
+    z-index: 998; pointer-events: none;
+    animation: conffall 1.5s ease-in forwards;
+  }
+  @keyframes conffall {
+    to { transform: translate(var(--dx), 70vh) rotate(var(--rot)); opacity: 0; }
+  }
+
   /* ---------- Tracker ---------- */
   .tracker {
     margin-top: 16px;
@@ -304,6 +337,7 @@
 <div class="app">
   <header>
     <div class="logo">Rack<span class="dot">&middot;</span>Run</div>
+    <div class="session-pill" id="trophyPill"></div>
     <div class="session-pill">Session: <b id="sessionMakes">0</b> / <span id="sessionTotal">0</span></div>
   </header>
 
@@ -513,6 +547,90 @@ function habitBlock(id) {
 }
 
 
+
+/* ---------- Proficiency tiers & celebrations ---------- */
+const TIER_NAMES = ["", "Bronze", "Silver", "Gold"];
+const TIER_COLORS = ["", "#cd7f32", "#b9c4cd", "#e8b83a"];
+function tierThresholds(d) {
+  const r = d.reps;
+  let gold = Math.ceil(r * 0.9);
+  let silver = Math.min(gold - 1, Math.ceil(r * 0.7));
+  let bronze = Math.min(silver - 1, Math.ceil(r * 0.5));
+  if (bronze < 1) bronze = 1;
+  if (silver <= bronze) silver = bronze + 1;
+  if (gold <= silver) gold = Math.min(r, silver + 1);
+  return [bronze, silver, gold];
+}
+function tierFor(d, best) {
+  const t = tierThresholds(d);
+  if (best >= t[2]) return 3;
+  if (best >= t[1]) return 2;
+  if (best >= t[0]) return 1;
+  return 0;
+}
+function ballBadge(color, size) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" style="vertical-align:-3px"><circle cx="10" cy="10" r="9" fill="${color}" stroke="#0a0d10" stroke-width="1.2"/><circle cx="7" cy="7" r="2.4" fill="#ffffff" opacity="0.55"/></svg>`;
+}
+function tierBadge(d, rec) {
+  const t = tierFor(d, rec.best);
+  if (!t) return '';
+  return `<span class="tier-badge" title="${TIER_NAMES[t]} \u2014 best set ${rec.best}/${d.reps}">${ballBadge(TIER_COLORS[t], 16)}</span>`;
+}
+function profBlock(d, rec) {
+  const th = tierThresholds(d);
+  const cur = tierFor(d, rec.best);
+  const chips = th.map((n, i) => {
+    const achieved = rec.best >= n;
+    return `<span class="tier-chip ${achieved ? 'achieved' : ''}" style="${achieved ? 'border-color:' + TIER_COLORS[i+1] : ''}">${ballBadge(achieved ? TIER_COLORS[i+1] : '#262e36', 14)} ${TIER_NAMES[i+1]} ${n}/${d.reps}</span>`;
+  }).join('');
+  let next = '';
+  if (cur < 3) {
+    const needed = th[cur] - rec.best;
+    next = `<div class="prof-next">${needed} more make${needed===1?'':'s'} in one set for ${TIER_NAMES[cur+1]}</div>`;
+  } else {
+    next = `<div class="prof-next gold-done">Gold \u2014 drill mastered. Defend the record.</div>`;
+  }
+  return `
+    <h4>Proficiency</h4>
+    <div class="prof-row">${chips}</div>
+    ${next}`;
+}
+function updateTrophies() {
+  const counts = [0,0,0,0];
+  DRILLS.forEach(d => { counts[tierFor(d, loadRec(d.id).best)]++; });
+  const el = document.getElementById('trophyPill');
+  if (!el) return;
+  el.innerHTML = `${ballBadge(TIER_COLORS[3],14)} ${counts[3]} &nbsp;${ballBadge(TIER_COLORS[2],14)} ${counts[2]} &nbsp;${ballBadge(TIER_COLORS[1],14)} ${counts[1]}`;
+}
+function confettiBurst() {
+  const colors = ['#e8b83a','#4a9fd4','#3fae6a','#f2ede3','#d04b3e'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti';
+    p.style.background = colors[i % colors.length];
+    p.style.left = (50 + (Math.random()*40 - 20)) + 'vw';
+    p.style.setProperty('--dx', (Math.random()*160 - 80) + 'px');
+    p.style.setProperty('--rot', (Math.random()*720 - 360) + 'deg');
+    p.style.animationDelay = (Math.random()*0.15) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1700);
+  }
+}
+let toastTimer = null;
+function celebrate(title, sub, tier) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  const color = tier ? TIER_COLORS[tier] : '#3fae6a';
+  t.innerHTML = `${ballBadge(color, 22)}<div><div class="toast-title">${title}</div><div class="toast-sub">${sub}</div></div>`;
+  t.style.borderColor = color;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  confettiBurst();
+}
+
 /* ---------- State ---------- */
 let activeCat = "All";
 let session = { makes:0, total:0 };
@@ -562,7 +680,7 @@ function renderList(){
           <h3>${d.name}</h3>
           <div class="meta">${diffDots(d.diff)} <span>${d.cat}</span></div>
         </div>
-        <span class="pct ${pctCls}">${pct===null?'—':pct+'%'}</span>
+        ${tierBadge(d, rec)}<span class="pct ${pctCls}">${pct===null?'—':pct+'%'}</span>
         <span class="chev" aria-hidden="true"></span>
       </button>
       ${isOpen ? drillBody(d, rec) : ''}
@@ -586,6 +704,7 @@ function drillBody(d, rec){
     <h4>Goal</h4>
     <div class="goal">${d.goal}</div>
     ${habitBlock(d.id)}
+    ${profBlock(d, rec)}
     <div class="tracker">
       <div class="tracker-row">
         <span class="label">This set (${d.reps} reps)</span>
@@ -622,17 +741,25 @@ window.log = function(id, made){
   rec.history.push(made ? 1 : 0);
   if(rec.history.length > 500) rec.history = rec.history.slice(-500);
   const setMakes = set.filter(x=>x===true).length;
-  if(set.length===d.reps && setMakes > rec.best) rec.best = setMakes;
+  if(set.length===d.reps && setMakes > rec.best) {
+    const oldTier = tierFor(d, rec.best);
+    rec.best = setMakes;
+    const newTier = tierFor(d, rec.best);
+    if (newTier > oldTier) celebrate(TIER_NAMES[newTier] + " unlocked!", d.name + " \u2014 best set " + setMakes + "/" + d.reps, newTier);
+    else celebrate("New personal record!", d.name + " \u2014 best set " + setMakes + "/" + d.reps, 0);
+  }
   saveRec(id, rec);
   session.total++; if(made) session.makes++;
   document.getElementById('sessionMakes').textContent = session.makes;
   document.getElementById('sessionTotal').textContent = session.total;
   renderList();
+  updateTrophies();
 };
 window.resetSet = function(id){ sets[id] = []; renderList(); };
 
 renderTabs();
 renderList();
+updateTrophies();
 
 /* ---------- PWA: register service worker ---------- */
 if ('serviceWorker' in navigator) {
