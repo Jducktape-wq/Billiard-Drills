@@ -194,6 +194,24 @@
     font-size: 13.5px;
   }
 
+  .habit {
+    background: var(--slate-3);
+    border-left: 3px solid #e8b83a;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-style: italic;
+  }
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--slate-3);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .contact-label { font-size: 13.5px; color: var(--ivory); font-weight: 600; }
+
   /* ---------- Tracker ---------- */
   .tracker {
     margin-top: 16px;
@@ -442,6 +460,59 @@ const DRILLS = [
   goal:"10 reps with a held finish — makes are a bonus, rhythm is the rep." }
 ];
 
+
+/* ---------- Key habits & tip contact points (x,y in ball radii; y+ = above center) ---------- */
+const HABITS = {
+  "ghost-line":   { habit: "Point your cue along the ghost-ball-to-pocket line before you ever get down on the shot.", cx: 0, cy: 0, label: "Dead center" },
+  "spot-shot":    { habit: "Keep your bridge length and stroke speed identical at every distance.", cx: 0, cy: 0, label: "Dead center" },
+  "clock-drill":  { habit: "Don't skip the hours that frustrate you \u2014 that's the data you actually need.", cx: 0, cy: 0, label: "Dead center" },
+  "cut-progress": { habit: "Eyes on the contact point last, not the pocket.", cx: 0, cy: 0, label: "Center \u2014 no side spin" },
+  "stop-shot":    { habit: "A stop shot is a slide, not a roll \u2014 if the cue ball creeps forward, add speed or hit lower.", cx: 0, cy: -0.45, label: "Slightly below center" },
+  "draw-ladder":  { habit: "Level cue and a long, low finish \u2014 no stabbing.", cx: 0, cy: -0.7, label: "Bottom third, near the edge" },
+  "follow-control": { habit: "Control distance with speed, not by chasing tip height.", cx: 0, cy: 0.55, label: "Above center" },
+  "stun-run":     { habit: "Call the tangent line out loud before you shoot, then check where the cue ball actually went.", cx: 0, cy: -0.3, label: "A touch below center \u2014 slide, don't roll" },
+  "draw-cut":     { habit: "Watch where the cue ball lands, not just whether the ball drops.", cx: 0, cy: -0.7, label: "Bottom third" },
+  "three-ball":   { habit: "Plan all three shots before the first one \u2014 think two balls ahead.", cx: 0, cy: 0, label: "Varies by shot \u2014 default center" },
+  "zone-drill":   { habit: "Pick the landing zone before you get down \u2014 never mid-stroke.", cx: 0, cy: 0, label: "Varies \u2014 whatever the shape needs" },
+  "line-of-balls": { habit: "Small, soft position moves \u2014 big cue ball travel is the enemy here.", cx: 0, cy: -0.2, label: "Center to slightly low" },
+  "nine-spot":    { habit: "Play position for the next ball even when the current shot is easy.", cx: 0, cy: 0, label: "Varies by shot" },
+  "cross-side":   { habit: "Medium speed \u2014 hard banks come up short, soft banks run long.", cx: 0, cy: 0, label: "Dead center" },
+  "one-rail-kick": { habit: "Commit to a diamond target every time \u2014 guessing teaches nothing.", cx: 0, cy: 0.35, label: "Center or slight follow" },
+  "two-rail-kick": { habit: "Running english keeps two-rail angles honest and predictable.", cx: 0.5, cy: 0.2, label: "Running english" },
+  "lag-drill":    { habit: "Same smooth stroke every time \u2014 only the backswing length changes.", cx: 0, cy: 0.45, label: "Above center \u2014 natural roll" },
+  "speed-zones":  { habit: "Calibrate three named strokes \u2014 soft, medium, firm \u2014 and trust them.", cx: 0, cy: 0, label: "Dead center" },
+  "rail-first":   { habit: "Watch the object ball die in the zone \u2014 that touch is your safety game.", cx: 0, cy: 0, label: "Dead center, soft" },
+  "hide-drill":   { habit: "The hide matters more than the hit \u2014 full snooker or it's a miss.", cx: 0, cy: -0.4, label: "Low for control" },
+  "distance-safe": { habit: "Frozen to the rail beats close to the rail \u2014 every time.", cx: 0, cy: -0.4, label: "Low \u2014 kill the cue ball" },
+  "break-control": { habit: "A square hit beats raw power every time \u2014 watch how the rack spreads.", cx: 0, cy: -0.15, label: "A hair below center" },
+  "break-speed":  { habit: "If the cue ball veers sideways, the hit was off-center \u2014 no exceptions.", cx: 0, cy: 0, label: "Dead center" },
+  "bottle-drill": { habit: "Hold your finish position until the ball comes all the way back.", cx: 0, cy: 0, label: "Dead center" },
+  "pause-drill":  { habit: "Slow back, brief pause, smooth through \u2014 freeze the finish for two full seconds.", cx: 0, cy: 0, label: "Dead center" }
+};
+
+function contactSVG(cx, cy) {
+  const px = 32 + cx * 21;
+  const py = 32 - cy * 21;
+  return `<svg width="60" height="60" viewBox="0 0 64 64" aria-label="Cue ball contact point">
+    <circle cx="32" cy="32" r="28" fill="#f2ede3" stroke="#0a0d10" stroke-width="2"/>
+    <circle cx="22" cy="22" r="6" fill="#ffffff" opacity="0.8"/>
+    <line x1="32" y1="7" x2="32" y2="57" stroke="#00000026" stroke-width="1.2"/>
+    <line x1="7" y1="32" x2="57" y2="32" stroke="#00000026" stroke-width="1.2"/>
+    <circle cx="${px}" cy="${py}" r="5.5" fill="#4a9fd4" stroke="#0a0d10" stroke-width="1.2"/>
+  </svg>`;
+}
+
+function habitBlock(id) {
+  const h = HABITS[id];
+  if (!h) return '';
+  return `
+    <h4>Key Habit</h4>
+    <div class="habit">${h.habit}</div>
+    <h4>Tip Contact</h4>
+    <div class="contact-row">${contactSVG(h.cx, h.cy)}<span class="contact-label">${h.label}</span></div>`;
+}
+
+
 /* ---------- State ---------- */
 let activeCat = "All";
 let session = { makes:0, total:0 };
@@ -514,6 +585,7 @@ function drillBody(d, rec){
     <ol>${d.setup.map(s=>`<li>${s}</li>`).join('')}</ol>
     <h4>Goal</h4>
     <div class="goal">${d.goal}</div>
+    ${habitBlock(d.id)}
     <div class="tracker">
       <div class="tracker-row">
         <span class="label">This set (${d.reps} reps)</span>
