@@ -245,6 +245,8 @@
     to { transform: translate(var(--dx), 70vh) rotate(var(--rot)); opacity: 0; }
   }
 
+  .habit-tip { margin-top: 6px; font-size: 12px; font-style: normal; font-weight: 700; color: var(--chalk); }
+
   /* ---------- Tracker ---------- */
   .tracker {
     margin-top: 16px;
@@ -357,7 +359,7 @@ const store = {
 
 /* ---------- Table diagram renderer ----------
    Coordinates: x 0-100 (length), y 0-50 (width). Foot spot ~ (75,25). */
-function tableSVG(cfg){
+function tableSVG(cfg, contact){
   const balls = cfg.balls || [];
   const lines = cfg.lines || [];
   const zones = cfg.zones || [];
@@ -376,6 +378,12 @@ function tableSVG(cfg){
     s += `<circle cx="${b.x}" cy="${b.y}" r="2.1" fill="${fill}" stroke="${stroke}" stroke-width="0.5" ${b.t==='ghost'?'stroke-dasharray="1.2 1"':''}/>`;
     if(b.t==='cue') s += `<circle cx="${b.x-0.6}" cy="${b.y-0.6}" r="0.5" fill="#ffffffcc"/>`;
   });
+  if (contact) {
+    const bx = 11, by = 10.5, br = 6.5;
+    const dx = bx + contact.cx * br * 0.75;
+    const dy = by - contact.cy * br * 0.75;
+    s += `<g opacity="0.95"><circle cx="${bx}" cy="${by}" r="${br}" fill="#f2ede3" stroke="#0a0d10" stroke-width="0.7"/><circle cx="${bx-2.2}" cy="${by-2.2}" r="1.5" fill="#ffffff" opacity="0.6"/><line x1="${bx}" y1="${by-br+1.2}" x2="${bx}" y2="${by+br-1.2}" stroke="#00000026" stroke-width="0.5"/><line x1="${bx-br+1.2}" y1="${by}" x2="${bx+br-1.2}" y2="${by}" stroke="#00000026" stroke-width="0.5"/><circle cx="${dx}" cy="${dy}" r="1.6" fill="#4a9fd4" stroke="#0a0d10" stroke-width="0.4"/><title>Tip contact: ${contact.label}</title></g>`;
+  }
   s += `</svg>`;
   return s;
 }
@@ -541,9 +549,7 @@ function habitBlock(id) {
   if (!h) return '';
   return `
     <h4>Key Habit</h4>
-    <div class="habit">${h.habit}</div>
-    <h4>Tip Contact</h4>
-    <div class="contact-row">${contactSVG(h.cx, h.cy)}<span class="contact-label">${h.label}</span></div>`;
+    <div class="habit">${h.habit}<div class="habit-tip">Tip contact: ${h.label}</div></div>`;
 }
 
 
@@ -698,13 +704,12 @@ function drillBody(d, rec){
   const missed = setReps.filter(x=>x===false).length;
   return `
   <div class="drill-body">
-    ${tableSVG(d.diagram)}
+    ${tableSVG(d.diagram, HABITS[d.id])}
     <h4>Setup</h4>
     <ol>${d.setup.map(s=>`<li>${s}</li>`).join('')}</ol>
     <h4>Goal</h4>
     <div class="goal">${d.goal}</div>
     ${habitBlock(d.id)}
-    ${profBlock(d, rec)}
     <div class="tracker">
       <div class="tracker-row">
         <span class="label">This set (${d.reps} reps)</span>
@@ -717,6 +722,7 @@ function drillBody(d, rec){
         <button class="btn reset-btn" onclick="resetSet('${d.id}')" title="Reset this set">↺</button>
       </div>
       <div class="best">Best set: <b>${rec.best} / ${d.reps}</b> · Lifetime attempts: <b>${rec.history.length}</b></div>
+      ${profBlock(d, rec)}
     </div>
   </div>`;
 }
