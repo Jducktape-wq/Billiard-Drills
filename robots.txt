@@ -3,3 +3,5 @@ User-agent: *
 Allow: /
 
 # build nudge: compact layout
+
+# deploy nudge 2026-07-04
