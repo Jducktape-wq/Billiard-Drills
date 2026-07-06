@@ -1,8 +1,11 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.jducktape_wq.rackrun",
-        "sha256_cert_fingerprints": ["F7:5F:7F:6A:87:58:F7:38:2C:02:43:60:1E:82:21:E2:0A:91:5F:F9:30:2D:23:FB:85:0B:E8:A8:3F:62:7A:B9"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.jducktape_wq.rackrun",
+    "sha256_cert_fingerprints": [
+      "F7:5F:7F:6A:87:58:F7:38:2C:02:43:60:1E:82:21:E2:0A:91:5F:F9:30:2D:23:FB:85:0B:E8:A8:3F:62:7A:B9",
+      "16:FD:8D:DC:9F:F1:EE:2A:DE:D8:33:87:DC:A2:13:67:F2:A8:2C:B1:E4:7B:D0:E7:DA:7E:40:14:E0:6B:FB:46"
+    ]
+  }
+}]
